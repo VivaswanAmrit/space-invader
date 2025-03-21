@@ -1,5 +1,4 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
 // Initialize Supabase client
 const supabaseUrl = 'https://iqtzfidmpzleruptseve.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxdHpmaWRtcHpsZXJ1cHRzZXZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0NDA3NTcsImV4cCI6MjA1NzAxNjc1N30.0PxogDB984qnypk-rfTIVco77AbChHaVsKAKQ0RKJfk';
@@ -7,12 +6,15 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Function to store user data
 async function storeUserData(name, mode, score) {
+    // Convert name to uppercase before any database operations
+    const upperName = name.toUpperCase();
+    
     // First, check if player exists or create them
     let playerId;
     const { data: existingPlayer, error: playerError } = await supabase
         .from('players')
         .select('id')
-        .eq('name', name)
+        .eq('name', upperName)
         .single();
 
     if (playerError && playerError.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
@@ -23,10 +25,10 @@ async function storeUserData(name, mode, score) {
     if (existingPlayer) {
         playerId = existingPlayer.id;
     } else {
-        // Create new player
+        // Create new player with uppercase name
         const { data: newPlayer, error: createError } = await supabase
             .from('players')
-            .insert({ name })
+            .insert({ name: upperName })
             .select('id')
             .single();
 
@@ -57,6 +59,9 @@ async function storeUserData(name, mode, score) {
 
 // Function to update user score
 async function updateUserScore(name, mode, score, sessionHighScore) {
+    // Convert name to uppercase
+    const upperName = name.toUpperCase();
+    
     // Update session high score immediately if current score is higher
     const newSessionHighScore = Math.max(score, sessionHighScore);
     
@@ -64,7 +69,7 @@ async function updateUserScore(name, mode, score, sessionHighScore) {
     const { data: player, error: playerError } = await supabase
         .from('players')
         .select('id')
-        .eq('name', name)
+        .eq('name', upperName)
         .single();
 
     if (playerError) {
@@ -108,11 +113,14 @@ async function updateUserScore(name, mode, score, sessionHighScore) {
 
 // Add a new function to load the player's high score from the database
 async function loadPlayerHighScore(name, mode) {
+    // Convert name to uppercase
+    const upperName = name.toUpperCase();
+    
     // Get the player's ID
     const { data: player, error: playerError } = await supabase
         .from('players')
         .select('id')
-        .eq('name', name)
+        .eq('name', upperName)
         .single();
 
     if (playerError) {
