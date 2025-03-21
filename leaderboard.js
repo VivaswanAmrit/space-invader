@@ -146,7 +146,7 @@ async function loadPlayerHighScore(name, mode) {
 }
 
 // Add this function to create and display a leaderboard UI with retro style
-function createLeaderboardUI(leaderboardData, playerRank) {
+function createLeaderboardUI(leaderboardData, playerInfo) {
     // Remove any existing leaderboard UI
     const existingLeaderboard = document.getElementById('leaderboard-container');
     if (existingLeaderboard) {
@@ -183,7 +183,7 @@ function createLeaderboardUI(leaderboardData, playerRank) {
     container.appendChild(header);
     
     // Create player rank display if available
-    if (playerRank) {
+    if (playerInfo) {
         const rankDisplay = document.createElement('div');
         rankDisplay.style.backgroundColor = 'black';  // Changed to black
         rankDisplay.style.color = 'white';  // White text on black for contrast
@@ -192,7 +192,7 @@ function createLeaderboardUI(leaderboardData, playerRank) {
         rankDisplay.style.width = '80%';
         rankDisplay.style.fontWeight = 'bold';
         rankDisplay.style.letterSpacing = '1px';  // Added letter spacing for retro look
-        rankDisplay.textContent = `YOUR RANK: ${playerRank}`;  // All caps for retro style
+        rankDisplay.textContent = `YOUR RANK: ${playerInfo.rank}`;  // All caps for retro style
         container.appendChild(rankDisplay);
     }
     
@@ -200,19 +200,19 @@ function createLeaderboardUI(leaderboardData, playerRank) {
     const table = document.createElement('table');
     table.style.width = '100%';
     table.style.borderCollapse = 'collapse';
-    table.style.border = '2px solid black';  // Added border
+    table.style.border = '2px solid black';
     
     // Create table header
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
-    headerRow.style.backgroundColor = 'black';  // Black background for header
+    headerRow.style.backgroundColor = 'black';
     
-    const headers = ['RANK', 'PLAYER', 'MODE', 'SCORE'];  // All caps for retro style
+    const headers = ['RANK', 'PLAYER', 'MODE', 'SCORE'];
     headers.forEach(text => {
         const th = document.createElement('th');
         th.textContent = text;
         th.style.padding = '8px';
-        th.style.color = 'white';  // White text on black header
+        th.style.color = 'white';
         th.style.fontWeight = 'bold';
         headerRow.appendChild(th);
     });
@@ -222,23 +222,76 @@ function createLeaderboardUI(leaderboardData, playerRank) {
     
     // Create table body
     const tbody = document.createElement('tbody');
-    
-    // Add each leaderboard entry to the table
+
+    // If we have player info, find and show their entry at the top
+    if (playerInfo && leaderboardData.length > 0) {
+        // Find the player's entry by matching player_id
+        const playerEntry = leaderboardData.find(entry => entry.player_id === playerInfo.playerId);
+        
+        if (playerEntry) {
+            // Create player's row at the top
+            const playerRow = document.createElement('tr');
+            playerRow.style.backgroundColor = '#ffeb3b'; // Yellow highlight
+            playerRow.style.fontWeight = 'bold';
+            playerRow.style.borderBottom = '2px solid black';
+            
+            // Add cells for player's row
+            const rankCell = document.createElement('td');
+            rankCell.textContent = playerInfo.rank;
+            rankCell.style.padding = '8px';
+            rankCell.style.textAlign = 'center';
+            playerRow.appendChild(rankCell);
+            
+            const nameCell = document.createElement('td');
+            nameCell.textContent = playerEntry.playerName;
+            nameCell.style.padding = '8px';
+            playerRow.appendChild(nameCell);
+            
+            const modeCell = document.createElement('td');
+            modeCell.textContent = playerEntry.mode.toUpperCase();
+            modeCell.style.padding = '8px';
+            modeCell.style.textAlign = 'center';
+            playerRow.appendChild(modeCell);
+            
+            const scoreCell = document.createElement('td');
+            scoreCell.textContent = playerEntry.high_score;
+            scoreCell.style.padding = '8px';
+            scoreCell.style.textAlign = 'right';
+            scoreCell.style.fontFamily = 'monospace';
+            scoreCell.style.fontWeight = 'bold';
+            playerRow.appendChild(scoreCell);
+            
+            tbody.appendChild(playerRow);
+
+            // Add separator
+            const separatorRow = document.createElement('tr');
+            const separatorCell = document.createElement('td');
+            separatorCell.colSpan = 4;
+            separatorCell.style.padding = '4px';
+            separatorCell.style.backgroundColor = '#ddd';
+            separatorCell.textContent = '--- FULL LEADERBOARD ---';
+            separatorCell.style.fontWeight = 'bold';
+            separatorRow.appendChild(separatorCell);
+            tbody.appendChild(separatorRow);
+        }
+    }
+
+    // Add all leaderboard entries
     leaderboardData.forEach((entry, index) => {
         const row = document.createElement('tr');
         
         // Zebra striping for rows
         if (index % 2 === 0) {
-            row.style.backgroundColor = '#f0f0f0';  // Light gray for even rows
+            row.style.backgroundColor = '#f0f0f0';
         }
         
-        // Highlight the current player's row
-        if (playerRank && index + 1 === playerRank) {
-            row.style.backgroundColor = '#ffeb3b';  // Yellow highlight for player's row
+        // Highlight the current player's row in the full leaderboard
+        if (playerInfo && entry.player_id === playerInfo.playerId) {
+            row.style.backgroundColor = '#ffeb3b';
             row.style.fontWeight = 'bold';
         }
         
-        // Rank cell
+        // Add cells for rank, name, mode, and score
         const rankCell = document.createElement('td');
         rankCell.textContent = index + 1;
         rankCell.style.padding = '8px';
@@ -246,34 +299,31 @@ function createLeaderboardUI(leaderboardData, playerRank) {
         rankCell.style.textAlign = 'center';
         row.appendChild(rankCell);
         
-        // Player name cell
         const nameCell = document.createElement('td');
         nameCell.textContent = entry.playerName;
         nameCell.style.padding = '8px';
         nameCell.style.borderBottom = '1px solid black';
         row.appendChild(nameCell);
         
-        // Mode cell
         const modeCell = document.createElement('td');
-        modeCell.textContent = entry.mode.toUpperCase();  // All caps for retro style
+        modeCell.textContent = entry.mode.toUpperCase();
         modeCell.style.padding = '8px';
         modeCell.style.borderBottom = '1px solid black';
         modeCell.style.textAlign = 'center';
         row.appendChild(modeCell);
         
-        // Score cell
         const scoreCell = document.createElement('td');
         scoreCell.textContent = entry.high_score;
         scoreCell.style.padding = '8px';
         scoreCell.style.borderBottom = '1px solid black';
         scoreCell.style.textAlign = 'right';
-        scoreCell.style.fontFamily = 'monospace';  // Monospace for score numbers
+        scoreCell.style.fontFamily = 'monospace';
         scoreCell.style.fontWeight = 'bold';
         row.appendChild(scoreCell);
         
         tbody.appendChild(row);
     });
-    
+
     table.appendChild(tbody);
     container.appendChild(table);
     
@@ -360,11 +410,14 @@ async function displayLeaderboard(mode = null) {
 
 // Modify the displayPlayerRank function to return the rank
 async function displayPlayerRank(name, mode) {
+    // Convert name to uppercase to match stored format
+    const upperName = name.toUpperCase();
+    
     // First get the player ID
     const { data: playerData, error: playerError } = await supabase
         .from('players')
         .select('id')
-        .eq('name', name)
+        .eq('name', upperName)
         .single();
         
     if (playerError) {
@@ -373,7 +426,7 @@ async function displayPlayerRank(name, mode) {
     }
     
     if (!playerData) {
-        console.log(`Player ${name} not found.`);
+        console.log(`Player ${upperName} not found.`);
         return null;
     }
     
@@ -393,10 +446,10 @@ async function displayPlayerRank(name, mode) {
     const rank = data.findIndex(entry => entry.player_id === playerData.id) + 1;
     
     if (rank > 0) {
-        console.log(`Player ${name} is ranked ${rank} in ${mode} mode.`);
-        return rank;
+        console.log(`Player ${upperName} is ranked ${rank} in ${mode} mode.`);
+        return { rank, playerId: playerData.id };  // Return both rank and playerId
     } else {
-        console.log(`Player ${name} not found in rankings for ${mode} mode.`);
+        console.log(`Player ${upperName} not found in rankings for ${mode} mode.`);
         return null;
     }
 }
@@ -406,14 +459,14 @@ async function showLeaderboardUI(playerName, mode) {
     // Get leaderboard data filtered by mode
     const leaderboardData = await displayLeaderboard(mode);
     
-    // Get player rank if a name is provided
-    let playerRank = null;
+    // Get player rank and id if a name is provided
+    let playerInfo = null;
     if (playerName && mode) {
-        playerRank = await displayPlayerRank(playerName, mode);
+        playerInfo = await displayPlayerRank(playerName.toUpperCase(), mode);
     }
     
     // Create and show the UI
-    createLeaderboardUI(leaderboardData, playerRank);
+    createLeaderboardUI(leaderboardData, playerInfo);
     
     // Add mode to the leaderboard title
     if (mode) {
