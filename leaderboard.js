@@ -231,7 +231,7 @@ function createLeaderboardUI(leaderboardData, playerInfo) {
         if (playerEntry) {
             // Create player's row at the top
             const playerRow = document.createElement('tr');
-            playerRow.style.backgroundColor = '#ffeb3b'; // Yellow highlight
+            playerRow.style.backgroundColor = '#ffeb3b';
             playerRow.style.fontWeight = 'bold';
             playerRow.style.borderBottom = '2px solid black';
             
@@ -243,7 +243,7 @@ function createLeaderboardUI(leaderboardData, playerInfo) {
             playerRow.appendChild(rankCell);
             
             const nameCell = document.createElement('td');
-            nameCell.textContent = playerEntry.playerName;
+            nameCell.textContent = playerEntry.actualName;
             nameCell.style.padding = '8px';
             playerRow.appendChild(nameCell);
             
@@ -357,14 +357,13 @@ function createLeaderboardUI(leaderboardData, playerInfo) {
     document.body.appendChild(container);
 }
 
-// Modify the displayLeaderboard function to filter by mode
+// Modify the displayLeaderboard function to show PLAYER_ID instead of names
 async function displayLeaderboard(mode = null) {
     let query = supabase
         .from('scores')
-        .select('*')
+        .select('*, players(name)')  // Include the player's name in the query
         .order('high_score', { ascending: false });
         
-    // If a mode is specified, filter by that mode
     if (mode) {
         query = query.eq('mode', mode);
     }
@@ -375,33 +374,19 @@ async function displayLeaderboard(mode = null) {
         console.error('Error fetching leaderboard:', error);
         return [];
     } else {
-        console.log('Leaderboard raw data:', data);
-        
         const leaderboardData = [];
         
-        // Now fetch player names separately
         if (data && data.length > 0) {
             for (let i = 0; i < data.length; i++) {
                 const entry = data[i];
-                const { data: playerData } = await supabase
-                    .from('players')
-                    .select('name')
-                    .eq('id', entry.player_id)
-                    .single();
-                
-                if (playerData) {
-                    console.log(`${i + 1}. ${playerData.name} - ${entry.mode} - ${entry.high_score}`);
-                    
-                    leaderboardData.push({
-                        playerName: playerData.name,
-                        mode: entry.mode,
-                        high_score: entry.high_score,
-                        player_id: entry.player_id
-                    });
-                }
+                leaderboardData.push({
+                    playerName: `PLAYER_${entry.player_id}`, // Anonymous display name
+                    actualName: entry.players.name, // Store actual name for personal display
+                    mode: entry.mode,
+                    high_score: entry.high_score,
+                    player_id: entry.player_id
+                });
             }
-        } else {
-            console.log('No leaderboard data found');
         }
         
         return leaderboardData;
